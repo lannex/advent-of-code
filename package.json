@@ -1,0 +1,29 @@
+{
+  "name": "advent-of-code-2020",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "re:clean": "bsb -clean-world",
+    "re:build": "bsb -make-world -clean-world",
+    "re:watch": "bsb -make-world -clean-world -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lannex/advent-of-code-2020.git"
+  },
+  "keywords": [
+    "rescript",
+    "aoc",
+    "2020"
+  ],
+  "author": "Shin, SJ",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lannex/advent-of-code-2020/issues"
+  },
+  "homepage": "https://github.com/lannex/advent-of-code-2020#readme",
+  "devDependencies": {
+    "bs-platform": "^9.0.1"
+  }
+}
