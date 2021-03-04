@@ -15,13 +15,12 @@ let countTrees = (~right, ~down, arr) => {
   })
   ->Belt.Array.reduce(({xIndex: -right, trees: 0.0}: treesType), (accumulator, item) => {
     let updatedXIndex = accumulator.xIndex + right
-    if item[mod(updatedXIndex, Belt.Array.length(item))] === "#" {
-      {
+    switch item[mod(updatedXIndex, Belt.Array.length(item))] === "#" {
+    | true => {
         xIndex: accumulator.xIndex + right,
         trees: accumulator.trees +. 1.0,
       }
-    } else {
-      {
+    | false => {
         xIndex: accumulator.xIndex + right,
         trees: accumulator.trees,
       }
