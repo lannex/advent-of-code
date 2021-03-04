@@ -8,41 +8,40 @@ type treesType = {
   trees: float,
 }
 
-let countTrees = (~right, ~down, arr) => {
-  arr
-  ->Belt.Array.keepWithIndex((_, i) => {
-    mod(i, down) === 0
-  })
-  ->Belt.Array.reduce(({xIndex: -right, trees: 0.0}: treesType), (accumulator, item) => {
-    let updatedXIndex = accumulator.xIndex + right
-    switch item[mod(updatedXIndex, Belt.Array.length(item))] === "#" {
-    | true => {
-        xIndex: accumulator.xIndex + right,
-        trees: accumulator.trees +. 1.0,
+let countTrees = (arr, ~slope) => {
+  let (right, down) = slope
+  let result =
+    arr
+    ->Belt.Array.keepWithIndex((_, i) => {
+      mod(i, down) === 0
+    })
+    ->Belt.Array.reduce(({xIndex: -right, trees: 0.0}: treesType), (accumulator, item) => {
+      let updatedXIndex = accumulator.xIndex + right
+      switch item[mod(updatedXIndex, Belt.Array.length(item))] === "#" {
+      | true => {
+          xIndex: accumulator.xIndex + right,
+          trees: accumulator.trees +. 1.0,
+        }
+      | false => {
+          xIndex: accumulator.xIndex + right,
+          trees: accumulator.trees,
+        }
       }
-    | false => {
-        xIndex: accumulator.xIndex + right,
-        trees: accumulator.trees,
-      }
-    }
-  })
+    })
+  result.trees
 }
-
-let {trees: part1Result} = countTrees(~right=3, ~down=1, inputToArr)
+let part1Slope = (3, 1)
+let part1Result = inputToArr->countTrees(~slope=part1Slope)
 Js.log(part1Result)
 // 232
 
-let part2Slopes = [[1, 1], [3, 1], [5, 1], [7, 1], [1, 2]]
-// part2Slopes->Belt.Array.forEach(slope => {
-//   let test = countTrees(~right=slope[0], ~down=slope[1], inputToArr)
-//   Js.log(test)
-//   // [ 86, 232, 90, 71, 31 ]
-// })
-
-let part2Result = part2Slopes->Belt.Array.reduce(1.0, (accumulator, slope) => {
-  let {trees: result} = countTrees(~right=slope[0], ~down=slope[1], inputToArr)
-  accumulator *. result
-})
+let part2Slopes = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
+let part2Result =
+  part2Slopes
+  ->Belt.Array.map(slope => inputToArr->countTrees(~slope))
+  ->Belt.Array.reduce(1.0, (accumulator, item) => {
+    accumulator *. item
+  })
 
 Js.log(part2Result)
 // 3952291680
