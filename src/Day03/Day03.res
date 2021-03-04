@@ -39,9 +39,7 @@ let part2Slopes = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
 let part2Result =
   part2Slopes
   ->Belt.Array.map(slope => inputToArr->countTrees(~slope))
-  ->Belt.Array.reduce(1.0, (accumulator, item) => {
-    accumulator *. item
-  })
+  ->Belt.Array.reduce(1.0, (accumulator, item) => accumulator *. item)
 
 Js.log(part2Result)
 // 3952291680
