@@ -13,7 +13,7 @@ let countTrees = (~right, ~down, arr) => {
   ->Belt.Array.keepWithIndex((_, i) => {
     mod(i, down) === 0
   })
-  ->Belt.Array.reduce({xIndex: -right, trees: 0.0}, (accumulator, item) => {
+  ->Belt.Array.reduce(({xIndex: -right, trees: 0.0}: treesType), (accumulator, item) => {
     let updatedXIndex = accumulator.xIndex + right
     if item[mod(updatedXIndex, Belt.Array.length(item))] === "#" {
       {
@@ -40,10 +40,8 @@ let part2Slopes = [[1, 1], [3, 1], [5, 1], [7, 1], [1, 2]]
 //   // [ 86, 232, 90, 71, 31 ]
 // })
 
-
 let part2Result = part2Slopes->Belt.Array.reduce(1.0, (accumulator, slope) => {
   let {trees: result} = countTrees(~right=slope[0], ~down=slope[1], inputToArr)
-  Js.log(accumulator)
   accumulator *. result
 })
 
