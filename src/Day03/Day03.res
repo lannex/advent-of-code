@@ -8,8 +8,7 @@ type treesType = {
   trees: float,
 }
 
-let countTrees = (arr, ~slope) => {
-  let (right, down) = slope
+let countTrees = (arr, (right, down)) => {
   let result =
     arr
     ->Belt.Array.keepWithIndex((_, i) => {
@@ -32,7 +31,7 @@ let countTrees = (arr, ~slope) => {
 }
 
 let part1Slope = (3, 1)
-let part1Result = inputToArr->countTrees(~slope=part1Slope)
+let part1Result = inputToArr->countTrees(part1Slope)
 
 Js.log(part1Result)
 // 232
@@ -40,7 +39,7 @@ Js.log(part1Result)
 let part2Slopes = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
 let part2Result =
   part2Slopes
-  ->Belt.Array.map(slope => inputToArr->countTrees(~slope))
+  ->Belt.Array.map(slope => inputToArr->countTrees(slope))
   ->Belt.Array.reduce(1.0, (accumulator, item) => accumulator *. item)
 
 Js.log(part2Result)

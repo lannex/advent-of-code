@@ -3,16 +3,17 @@ let inputToArr =
   ->Js.String2.split("\n")
   ->Belt.Array.map(item => Js.String2.split(item, ""))
 
-type rowRangeType = {
+type rangeType = {
   start: int,
   end: int,
 }
 
-let getRange = (rows, ~indexRange, ~rowRange) => {
+let getRange = (rows, ~indexRange, ~range) => {
   let (startIndex, endIndex) = indexRange
+  let (start, end) = range
   rows
   ->Belt.Array.slice(~offset=startIndex, ~len=endIndex)
-  ->Belt.Array.reduce((rowRange: rowRangeType), (accumulator, item) => {
+  ->Belt.Array.reduce(({start: start, end: end}: rangeType), (accumulator, item) => {
     let {start, end} = accumulator
     let center = Js.Math.ceil_int(Belt.Int.toFloat(end - start) /. 2.0)
 
@@ -29,15 +30,28 @@ let getRange = (rows, ~indexRange, ~rowRange) => {
   })
 }
 
-let part1Result =
-  inputToArr
-  ->Belt.Array.map(seats => {
-    let row = seats->getRange(~indexRange=(0, 7), ~rowRange={start: 0, end: 127})
-    let col = seats->getRange(~indexRange=(7, 3), ~rowRange={start: 0, end: 7})
+type rangeListType = {
+  indexRange: (int, int),
+  range: (int, int),
+}
+
+let rowRangeList: rangeListType = {
+  indexRange: (0, 7),
+  range: (0, 127),
+}
+
+let colRangeList: rangeListType = {
+  indexRange: (7, 3),
+  range: (0, 7),
+}
+
+let setIds = inputList =>
+  inputList->Belt.Array.map(seats => {
+    let row = seats->getRange(~indexRange=rowRangeList.indexRange, ~range=rowRangeList.range)
+    let col = seats->getRange(~indexRange=colRangeList.indexRange, ~range=colRangeList.range)
     row.start * 8 + col.start
   })
-  ->Js.Math.maxMany_int
 
+let part1Result = inputToArr->setIds->Js.Math.maxMany_int
 Js.log(part1Result)
-
-// let part2Result;
+// 938
