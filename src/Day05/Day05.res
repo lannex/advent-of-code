@@ -22,10 +22,11 @@ let getRange = (rows, ~indexRange, ~range) => {
         start: start,
         end: end - center,
       }
-    | _ => {
+    | "B" | "R" => {
         start: start + center,
         end: end,
       }
+    | _ => raise(Not_found)
     }
   })
 }
@@ -45,13 +46,14 @@ let colRangeList: rangeListType = {
   range: (0, 7),
 }
 
-let setIds = inputList =>
-  inputList->Belt.Array.map(seats => {
-    let row = seats->getRange(~indexRange=rowRangeList.indexRange, ~range=rowRangeList.range)
-    let col = seats->getRange(~indexRange=colRangeList.indexRange, ~range=colRangeList.range)
-    row.start * 8 + col.start
-  })
+let makeSeatId = ((row, col)) => row.start * 8 + col.start
 
-let part1Result = inputToArr->setIds->Js.Math.maxMany_int
-Js.log(part1Result)
+let seatsToRowCol: array<string> => (rangeType, rangeType) = seats => {
+  let row = seats->getRange(~indexRange=rowRangeList.indexRange, ~range=rowRangeList.range)
+  let col = seats->getRange(~indexRange=colRangeList.indexRange, ~range=colRangeList.range)
+  (row, col)
+}
+
+let part1Result =
+  inputToArr->Belt.Array.map(seatsToRowCol)->Belt.Array.map(makeSeatId)->Js.Math.maxMany_int->Js.log
 // 938
