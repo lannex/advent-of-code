@@ -30,8 +30,10 @@ let countTrees = (arr, ~slope) => {
     })
   result.trees
 }
+
 let part1Slope = (3, 1)
 let part1Result = inputToArr->countTrees(~slope=part1Slope)
+
 Js.log(part1Result)
 // 232
 
