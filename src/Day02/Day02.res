@@ -3,28 +3,24 @@ let inputToArr =
   ->Js.String2.split("\n")
   ->Belt.Array.map(item => Js.String2.split(item, " "))
 
+let getFirstInArr = arr => Belt.Array.getExn(arr, 0)
+
+let getLastInArr = arr => Belt.Array.getExn(arr, Belt.Array.length(arr) - 1)
+
 let getMinMax = li => {
-  let range = Belt.List.headExn(li)
-  let min = Belt.List.headExn(range)->Belt.Int.fromString->Belt.Option.getWithDefault(0)
-  let max =
-    Belt.List.tailExn(range)->Belt.List.headExn->Belt.Int.fromString->Belt.Option.getWithDefault(0)
+  let min = getFirstInArr(li)->Belt.Int.fromString->Belt.Option.getWithDefault(0)
+  let max = getLastInArr(li)->Belt.Int.fromString->Belt.Option.getWithDefault(0)
   (min, max)
 }
 
-let getChar = li =>
-  Belt.List.tailExn(li)->Belt.List.headExn->Belt.List.headExn->Js.String2.replace(":", "")
+let getChar = li => getFirstInArr(li)->Js.String2.replace(":", "")
 
-let getBody = li =>
-  Belt.List.tailExn(li)
-  ->Belt.List.tailExn
-  ->Belt.List.headExn
-  ->Belt.List.headExn
-  ->Js.String2.split("")
+let getBody = li => getFirstInArr(li)->Js.String2.split("")
 
 let parsePassword = li => {
-  let (min, max) = getMinMax(li)
-  let char = getChar(li)
-  let textArr = getBody(li)
+  let (min, max) = getFirstInArr(li)->getMinMax
+  let char = Belt.Array.getExn(li, 1)->getChar
+  let textArr = getLastInArr(li)->getBody
   (min, max, char, textArr)
 }
 
@@ -32,8 +28,7 @@ let part1 =
   inputToArr
   ->Belt.Array.map(line => {
     line
-    ->Belt.Array.map(item => Js.String2.split(item, "-")->Belt.List.fromArray)
-    ->Belt.List.fromArray
+    ->Belt.Array.map(item => Js.String2.split(item, "-"))
     ->parsePassword
     ->(
       ((min, max, char, textArr)) => {
