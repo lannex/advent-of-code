@@ -54,6 +54,28 @@ let seatsToRowCol: array<string> => (rangeType, rangeType) = seats => {
   (row, col)
 }
 
-let part1Result =
+let part1 =
   inputToArr->Belt.Array.map(seatsToRowCol)->Belt.Array.map(makeSeatId)->Js.Math.maxMany_int->Js.log
 // 938
+
+let makeSets = list => {
+  let min = Js.Math.minMany_int(list)
+  let max = Js.Math.maxMany_int(list)
+  let newRangeSet = Belt.Array.range(min, max)->Belt.Set.Int.fromArray
+  let listToSet = Belt.Set.Int.fromArray(list)
+  (newRangeSet, listToSet)
+}
+
+let diffSets = ((newRangeSet, listToSet)) => Belt.Set.Int.diff(newRangeSet, listToSet)
+
+let part2 =
+  inputToArr
+  ->Belt.Array.map(seatsToRowCol)
+  ->Belt.Array.map(makeSeatId)
+  ->Belt.SortArray.Int.stableSort
+  ->makeSets
+  ->diffSets
+  ->Belt.Set.Int.toArray
+  ->Belt.Array.getExn(0)
+  ->Js.log
+// 696
