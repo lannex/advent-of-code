@@ -7,7 +7,7 @@ let part1 =
   inputToArr
   ->Belt.Array.map(arr => {
     arr
-    ->Belt.Array.reduce("", (acc, item) => acc ++ item)
+    ->Js.String.concatMany("")
     ->Js.String2.split("")
     ->Belt.Set.String.fromArray
     ->Belt.Set.String.size
