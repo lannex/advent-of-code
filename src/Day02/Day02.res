@@ -3,31 +3,37 @@ let inputFromFile = Node.Fs.readFileAsUtf8Sync("./input.txt")
 exception Fail_to_read_input
 
 let parseInputToArr = (input: string) => {
-  input
-  ->Js.String2.split("\n")
-  ->Belt.Array.map(line => {
-    line
-    ->Js.String2.splitByReAtMost(%re("/(\d+)-(\d+) (\w): (\w+)/g"), ~limit=5)
-    ->Belt.Array.map(item => {
-      switch item {
-      | Some(value) => value
-      | None => raise(Fail_to_read_input)
-      }
+  try {
+    input
+    ->Js.String2.split("\n")
+    ->Belt.Array.map(line => {
+      line
+      ->Js.String2.splitByReAtMost(%re("/(\d+)-(\d+) (\w): (\w+)/g"), ~limit=5)
+      ->Belt.Array.map(item => {
+        switch item {
+        | Some(value) => value
+        | None => raise(Fail_to_read_input)
+        }
+      })
+      ->Belt.Array.keep(item => item !== "")
     })
-    ->Belt.Array.keep(item => item !== "")
-  })
+  } catch {
+  | Fail_to_read_input => Js.Exn.raiseError("Fail to read input")
+  }
 }
 
 module Password = {
-  type policy =
+  type policyType =
     | PART1
     | PART2
+
+  type pwArrType = array<string>
 
   type passwordType = {
     start: int,
     end: int,
     char: string,
-    pwArr: array<string>,
+    pwArr: pwArrType,
   }
 
   let getItems = (~lineArr) => {
@@ -56,7 +62,7 @@ module Password = {
     firstMatch !== secondMatch
   }
 
-  let validPassword = (~lineArr, ~policy) => {
+  let validPassword: (~lineArr: pwArrType, ~policy: policyType) => bool = (~lineArr, ~policy) => {
     let {start, end, char, pwArr}: passwordType = getItems(~lineArr)
 
     switch policy {
