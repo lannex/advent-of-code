@@ -48,7 +48,10 @@ let matchArr = (~start, ~end, ~pwArr, ~char) => {
 
 let validPart2Password = ((start, end, char, password)) => {
   let pwArr = password->Js.String2.split("")
-  pwArr->Belt.Array.map(_ => matchArr(~start, ~end, ~char, ~pwArr))->Utils.Array.getFirst
+  pwArr
+  ->Belt.Array.map(_ => matchArr(~start, ~end, ~char, ~pwArr))
+  ->Utils.Array.getFirst
+  ->Belt.Option.getWithDefault(false)
 }
 
 let part2 =

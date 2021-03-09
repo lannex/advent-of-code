@@ -1,5 +1,5 @@
 module Array = {
-  let getFirst = arr => Belt.Array.getExn(arr, 0)
+  let getFirst = arr => Belt.Array.get(arr, 0)
 
-  let getLast = arr => Belt.Array.getExn(arr, Belt.Array.length(arr) - 1)
+  let getLast = arr => Belt.Array.get(arr, Belt.Array.length(arr) - 1)
 }
