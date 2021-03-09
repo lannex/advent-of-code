@@ -3,30 +3,23 @@ let inputFromFile = Node.Fs.readFileAsUtf8Sync("./input.txt")
 exception Fail_to_read_input
 
 let parseInputToArr = (input: string) => {
-  try {
-    input
-    ->Js.String2.split("\n")
-    ->Belt.Array.map(line => {
-      line
-      ->Js.String2.splitByReAtMost(%re("/(\d+)-(\d+) (\w): (\w+)/g"), ~limit=5)
-      ->Belt.Array.map(item => {
-        switch item {
-        | Some(value) => value
-        | None => raise(Fail_to_read_input)
-        }
-      })
-      ->Belt.Array.keep(item => item !== "")
-    })
-  } catch {
-  | Fail_to_read_input => Js.Exn.raiseError("Fail to read input")
-  }
+  input
+  ->Js.String2.split("\n")
+  ->Belt.Array.map(line => {
+    let [_, start, end, char, pwArr] =
+      line->Js.String2.splitByReAtMost(%re("/(\d+)-(\d+) (\w): (\w+)/g"), ~limit=5)
+    [
+      start->Belt.Option.getWithDefault(""),
+      end->Belt.Option.getWithDefault(""),
+      char->Belt.Option.getWithDefault(""),
+      pwArr->Belt.Option.getWithDefault(""),
+    ]
+  })
 }
 
-module Password = {
-  type policyType =
-    | PART1
-    | PART2
+// let test = parseInputToArr(inputFromFile)->Js.log
 
+module Password = {
   type pwArrType = array<string>
 
   type passwordType = {
@@ -36,11 +29,11 @@ module Password = {
     pwArr: pwArrType,
   }
 
-  let getItems = (~lineArr) => {
-    let start = Utils.Array.getFirst(lineArr)->Belt.Int.fromString->Belt.Option.getWithDefault(0)
-    let end = Belt.Array.getExn(lineArr, 1)->Belt.Int.fromString->Belt.Option.getWithDefault(0)
-    let char = Belt.Array.getExn(lineArr, 2)
-    let pwArr = Utils.Array.getLast(lineArr)->Js.String2.split("")
+  let getItems = ls => {
+    let start = Utils.Array.getFirst(ls)->Belt.Int.fromString->Belt.Option.getWithDefault(0)
+    let end = Belt.Array.getExn(ls, 1)->Belt.Int.fromString->Belt.Option.getWithDefault(0)
+    let char = Belt.Array.getExn(ls, 2)
+    let pwArr = Utils.Array.getLast(ls)->Js.String2.split("")
     {
       start: start,
       end: end,
@@ -61,28 +54,44 @@ module Password = {
     let secondMatch = char === Belt.Array.getExn(pwArr, end - 1)
     firstMatch !== secondMatch
   }
-
-  let validPassword: (~lineArr: pwArrType, ~policy: policyType) => bool = (~lineArr, ~policy) => {
-    let {start, end, char, pwArr}: passwordType = getItems(~lineArr)
-
-    switch policy {
-    | PART1 =>
-      pwArr
-      ->Belt.Array.map(_ => compareArr(~char, ~pwArr))
-      ->Utils.Array.getFirst
-      ->(count => count >= start && count <= end)
-    | PART2 =>
-      pwArr->Belt.Array.map(_ => matchArr(~start, ~end, ~char, ~pwArr))->Utils.Array.getFirst
-    }
-  }
 }
 
 open Password
 
+// parseInt("1") => 1
+// parseInt("a") == NaN
+
+// let parsePassword: array<string> => option<string>
+// [Some("ccccc"), None, Some("abcde") ...]
+// Some length
+
+// let parsePassword: passwordInput => option<password>
+
+// let printPassword: password => unit = p => Js.log(p);
+
+// let parseUser = userInput => option<user>
+
+// let getUsername = user => string = u => u.name;
+
+// [true, false, ]
+// to
+// [Some("abcde"), None, Some("bbbbb") ...]
+
 let part1 =
   inputFromFile
   ->parseInputToArr
-  ->Belt.Array.map(lineArr => validPassword(~lineArr, ~policy=PART1))
+  ->Belt.Array.map(ls =>
+    ls
+    ->getItems
+    ->(
+      ({start, end, pwArr, char}) => {
+        pwArr
+        ->Belt.Array.map(_ => compareArr(~char, ~pwArr))
+        ->Utils.Array.getFirst
+        ->(count => count >= start && count <= end)
+      }
+    )
+  )
   ->Belt.Array.keep(item => item)
   ->Belt.Array.length
   ->Js.log
@@ -91,7 +100,15 @@ let part1 =
 let part2 =
   inputFromFile
   ->parseInputToArr
-  ->Belt.Array.map(lineArr => validPassword(~lineArr, ~policy=PART2))
+  ->Belt.Array.map(ls =>
+    ls
+    ->getItems
+    ->(
+      ({start, end, pwArr, char}) => {
+        pwArr->Belt.Array.map(_ => matchArr(~start, ~end, ~char, ~pwArr))->Utils.Array.getFirst
+      }
+    )
+  )
   ->Belt.Array.keep(item => item)
   ->Belt.Array.length
   ->Js.log
