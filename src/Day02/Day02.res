@@ -14,59 +14,47 @@ let parseInput = (input: string) => {
       char->Belt.Option.getExn,
       password->Belt.Option.getExn,
     )
+    // (
+    //   start->Belt.Option.getExn->Belt.Int.fromString,
+    //   end->Belt.Option.getExn->Belt.Int.fromString,
+    //   char,
+    //   password,
+    // )
   })
 }
 
-module Password = {
-  // type passwordType = (option<int>, option<int>, option<string>, option<string>)
-  type passwordType = (int, int, string, string)
+type passwordType = (int, int, string, string)
 
-  let compareArr = (~char, ~pwArr) => {
-    let newArr = Belt.Array.make(Belt.Array.length(pwArr), char)
-    Belt.Array.keepWithIndex(newArr, (newArrItem, i) =>
-      newArrItem === Belt.Array.getExn(pwArr, i)
-    )->Belt.Array.length
-  }
-
-  let matchArr = (~start, ~end, ~pwArr, ~char) => {
-    let firstMatch = char === Belt.Array.getExn(pwArr, start - 1)
-    let secondMatch = char === Belt.Array.getExn(pwArr, end - 1)
-    firstMatch !== secondMatch
-  }
+let validPart1Password = ((start, end, char, password)) => {
+  let count =
+    password->Js.String2.split("")->Belt.Array.keep(item => char == item)->Belt.Array.length
+  count >= start && count <= end
 }
-
-open Password
 
 let part1 =
   inputFromFile
   ->parseInput
-  ->Belt.Array.map(ls =>
-    ls->(
-      ((start, end, char, password): passwordType) => {
-        let pwArr = password->Js.String2.split("")
-        pwArr
-        ->Belt.Array.map(_ => compareArr(~char, ~pwArr))
-        ->Utils.Array.getFirst
-        ->(count => count >= start && count <= end)
-      }
-    )
-  )
+  ->Belt.Array.map(validPart1Password)
   ->Belt.Array.keep(item => item)
   ->Belt.Array.length
   ->Js.log
 // 546
 
+let matchArr = (~start, ~end, ~pwArr, ~char) => {
+  let firstMatch = char === Belt.Array.getExn(pwArr, start - 1)
+  let secondMatch = char === Belt.Array.getExn(pwArr, end - 1)
+  firstMatch !== secondMatch
+}
+
+let validPart2Password = ((start, end, char, password)) => {
+  let pwArr = password->Js.String2.split("")
+  pwArr->Belt.Array.map(_ => matchArr(~start, ~end, ~char, ~pwArr))->Utils.Array.getFirst
+}
+
 let part2 =
   inputFromFile
   ->parseInput
-  ->Belt.Array.map(ls =>
-    ls->(
-      ((start, end, char, password): passwordType) => {
-        let pwArr = password->Js.String2.split("")
-        pwArr->Belt.Array.map(_ => matchArr(~start, ~end, ~char, ~pwArr))->Utils.Array.getFirst
-      }
-    )
-  )
+  ->Belt.Array.map(validPart2Password)
   ->Belt.Array.keep(item => item)
   ->Belt.Array.length
   ->Js.log
