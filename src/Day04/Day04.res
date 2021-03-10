@@ -2,7 +2,55 @@ let inputFromFile = Node.Fs.readFileAsUtf8Sync("./input.txt")->Js.String2.split(
 
 exception Failed_to_validate
 
-let parseInput = (item: string) => {
+type rawPassportType = option<string>
+
+type user = {
+  name: option<string>,
+  age: option<string>,
+}
+
+// let parse: string => option<p1passporType>
+// Belt.Array.map(parse) -> [Some(p), None, Some(p)...] -> [p, p] -> array<passortType>
+
+// let board => passport => bool
+//
+
+// type p1PassportType = {
+//   byr: string,
+//   iyr: string,
+//   eyr: string,
+//   hgt: string,
+//   hcl: string,
+//   ecl: string,
+//   pid: string,
+//   cid: option<string>,
+// }
+
+// type passportType = {
+//   byr: int,
+//   iyr: int,
+//   eyr: string,
+//   hgt: string,
+//   hcl: string,
+//   ecl: string,
+//   pid: string,
+//   cid: option<string>,
+// }
+
+type passportType = {
+  byr: rawPassportType,
+  iyr: rawPassportType,
+  eyr: rawPassportType,
+  hgt: rawPassportType,
+  hcl: rawPassportType,
+  ecl: rawPassportType,
+  pid: rawPassportType,
+  cid: rawPassportType,
+}
+
+type eclType = AMB | BLU | BRN | GRY | GRN | HZL | OTH
+
+let parseInput = (item: string): option<Belt.Map.String.t<string>> => {
   let makeMap =
     item
     ->Js.String2.splitByRe(%re("/\s/"))
@@ -38,21 +86,6 @@ let part1 =
   ->Js.log
 
 module Validate = {
-  type rawPassportType = option<string>
-
-  type passportType = {
-    byr: rawPassportType,
-    iyr: rawPassportType,
-    eyr: rawPassportType,
-    hgt: rawPassportType,
-    hcl: rawPassportType,
-    ecl: rawPassportType,
-    pid: rawPassportType,
-    cid: rawPassportType,
-  }
-
-  // type eclType = AMB|BLU|BRN|GRY|GRN|HZL|OTH
-
   let matchReg = (string, regex) => {
     switch string->Js.String2.match_(regex) {
     | Some(v) => Belt.Array.getExn(v, 0) === string
@@ -152,4 +185,11 @@ let part2 =
   ->Belt.Array.map(parseInput)
   ->Belt.Array.keep(Validate.all)
   ->Belt.Array.length
+  // [true, false, true, false ...]
+  // ->passportCounter
   ->Js.log
+
+let passportCounter: array<passportType> => int = a => a->Belt.Array.length
+
+// let parser: string => option<t>
+// type t
