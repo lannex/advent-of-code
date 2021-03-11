@@ -16,9 +16,9 @@ qweqwe
 
 module Program = {
   type codeType =
-    | Nop(int)
     | Acc(int)
     | Jmp(int)
+    | Nop(int)
 
   type jopType =
     | Finish
@@ -31,6 +31,8 @@ module Program = {
     job: jopType,
     indexSets: Belt.Set.Int.t,
   }
+
+  let initData = {index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty}
 
   let setItem = (selectedItem, index, cb) =>
     switch Belt.Set.Int.has(selectedItem.indexSets, index) {
@@ -46,13 +48,6 @@ module Program = {
     let currentItem = list->Belt.Array.get(index)
 
     let updatedItem = switch currentItem {
-    | Some(Nop(_)) =>
-      setItem(selectedItem, index, () => {
-        ...selectedItem,
-        index: index + 1,
-        indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
-      })
-
     | Some(Acc(value)) =>
       setItem(selectedItem, index, () => {
         ...selectedItem,
@@ -68,6 +63,13 @@ module Program = {
         indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
       })
 
+    | Some(Nop(_)) =>
+      setItem(selectedItem, index, () => {
+        ...selectedItem,
+        index: index + 1,
+        indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
+      })
+
     | None => {
         ...selectedItem,
         job: Finish,
@@ -79,13 +81,21 @@ module Program = {
     | _ => updatedItem
     }
   }
+
+  let swapOperation = code => {
+    switch code {
+    | Nop(value) => Jmp(value)
+    | Jmp(value) => Nop(value)
+    | _ => code
+    }
+  }
 }
 
 module Parse = {
   open Program
 
   let input = item => {
-    let re = %re("/(nop|acc|jmp) (\+|\-)(\d+)/")->Js.Re.exec_(item)
+    let re = %re("/(acc|jmp|nop) (\+|\-)(\d+)/")->Js.Re.exec_(item)
 
     switch re {
     | Some(reResult) => {
