@@ -76,7 +76,7 @@ module Program = {
 
     switch updatedItem.job {
     | Loop => run(list, updatedItem)
-    | Finish | _ => updatedItem
+    | _ => updatedItem
     }
   }
 }
@@ -105,7 +105,6 @@ module Parse = {
             }
           }
         )
-
         Some(operation)
       }
     | None => None
@@ -115,8 +114,7 @@ module Parse = {
 
 let program =
   inputFromFile
-  ->Belt.Array.map(Parse.input)
-  ->Belt.Array.keepMap(item => item)
+  ->Belt.Array.keepMap(Parse.input)
   ->Program.run({index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty})
 
 let part1 = program.total->Js.log
