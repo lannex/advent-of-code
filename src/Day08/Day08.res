@@ -15,12 +15,10 @@ qweqwe
 -qweqw"->Js.String2.split("\n")
 
 module Program = {
-  type operationType =
-    | Nop
-    | Acc
-    | Jmp
-
-  type codeType = Code(operationType, int)
+  type codeType =
+    | Nop(int)
+    | Acc(int)
+    | Jmp(int)
 
   type jopType =
     | Finish
@@ -43,19 +41,19 @@ module Program = {
     | false => cb()
     }
 
-  let rec runProgram = (list, selectedItem) => {
+  let rec run = (list, selectedItem) => {
     let {index, total} = selectedItem
     let currentItem = list->Belt.Array.get(index)
 
     let updatedItem = switch currentItem {
-    | Some(Code(Nop, _)) =>
+    | Some(Nop(_)) =>
       setItem(selectedItem, index, () => {
         ...selectedItem,
         index: index + 1,
         indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
       })
 
-    | Some(Code(Acc, value)) =>
+    | Some(Acc(value)) =>
       setItem(selectedItem, index, () => {
         ...selectedItem,
         index: index + 1,
@@ -63,7 +61,7 @@ module Program = {
         indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
       })
 
-    | Some(Code(Jmp, value)) =>
+    | Some(Jmp(value)) =>
       setItem(selectedItem, index, () => {
         ...selectedItem,
         index: index + value,
@@ -77,7 +75,7 @@ module Program = {
     }
 
     switch updatedItem.job {
-    | Loop => runProgram(list, updatedItem)
+    | Loop => run(list, updatedItem)
     | Finish | _ => updatedItem
     }
   }
@@ -95,19 +93,20 @@ module Parse = {
           reResult
           ->Js.Re.captures
           ->Belt.Array.keepMap(nullableItem => Js.Nullable.toOption(nullableItem))
+        let argument =
+          (Belt.Array.getExn(result, 2) ++ Utils.Array.getLastExn(result))->Garter.Int.fromStringExn
         let operation = Belt.Array.getExn(result, 1)->(
           op => {
             switch op {
-            | "acc" => Acc
-            | "jmp" => Jmp
-            | "nop" => Nop
-            | _ => raise(Not_found) //
+            | "acc" => Acc(argument)
+            | "jmp" => Jmp(argument)
+            | "nop" => Nop(argument)
+            | _ => raise(Failed_to_parse_input) // Can't access this point
             }
           }
         )
-        let argument =
-          (Belt.Array.getExn(result, 2) ++ Utils.Array.getLastExn(result))->Garter.Int.fromStringExn
-        Some(Code(operation, argument))
+
+        Some(operation)
       }
     | None => None
     }
@@ -118,6 +117,6 @@ let program =
   inputFromFile
   ->Belt.Array.map(Parse.input)
   ->Belt.Array.keepMap(item => item)
-  ->Program.runProgram({index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty})
+  ->Program.run({index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty})
 
 let part1 = program.total->Js.log
