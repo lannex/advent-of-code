@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@greenlabs/garter@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@greenlabs/garter/-/garter-0.4.1.tgz#c4d6c178656c2b8bd6089a40da820ba1cee9fa69"
-  integrity sha512-vNvLZ4Mxf0oDR8zWygoNoJEG7me7MoBIXYWIMQfOoqRN+igLgtZy0Ocu4sgbchoAvzV83Csal8ToOzM1HgtW3Q==
+"@greenlabs/garter@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@greenlabs/garter/-/garter-0.5.0.tgz#b634db1daee19b7e0b15bace195bd9f6ec271579"
+  integrity sha512-zCqepd+PaNMrwv3J2r8wPHfeTsb2hKzLPaN2BgwHruObgCxdghuUVMr+GeAlVTN8x/1LTm7qfqgAYAJSjh61NQ==
 
 bs-platform@^9.0.1:
   version "9.0.1"

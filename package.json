@@ -27,6 +27,6 @@
     "bs-platform": "^9.0.1"
   },
   "dependencies": {
-    "@greenlabs/garter": "^0.4.1"
+    "@greenlabs/garter": "^0.5.0"
   }
 }
