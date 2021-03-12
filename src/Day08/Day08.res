@@ -4,18 +4,6 @@ exception Failed_to_parse_input
 
 exception Failed_to_loop
 
-let testInput = "nop +0
-acc +1
-jmp +4
-acc +3
-jmp -3
-acc -99
-acc +1
-jmp -4
-acc +6
-qweqwe
--qweqw"->Js.String2.split("\n")
-
 module Program = {
   type codeType =
     | Acc(int)
@@ -92,9 +80,8 @@ module Program = {
     }
 
   let rec runSwap = (arr, ~updatedIndex) => {
-    let selectedArr = arr
     let program =
-      selectedArr
+      arr
       ->Belt.Array.mapWithIndex((i, item) => {
         switch i === updatedIndex {
         | true => swapOperation(item)
@@ -105,7 +92,7 @@ module Program = {
 
     switch program.job {
     | Finish | Loop => program
-    | Infinite => runSwap(selectedArr, ~updatedIndex=updatedIndex - 1)
+    | Infinite => runSwap(arr, ~updatedIndex=updatedIndex - 1)
     }
   }
 }
