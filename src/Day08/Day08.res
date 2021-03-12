@@ -2,6 +2,8 @@ let inputFromFile = Node.Fs.readFileAsUtf8Sync("./input.txt")->Js.String2.split(
 
 exception Failed_to_parse_input
 
+exception Failed_to_loop
+
 let testInput = "nop +0
 acc +1
 jmp +4
@@ -82,11 +84,28 @@ module Program = {
     }
   }
 
-  let swapOperation = code => {
+  let swapOperation = code =>
     switch code {
     | Nop(value) => Jmp(value)
     | Jmp(value) => Nop(value)
     | _ => code
+    }
+
+  let rec runSwap = (arr, ~updatedIndex) => {
+    let selectedArr = arr
+    let program =
+      selectedArr
+      ->Belt.Array.mapWithIndex((i, item) => {
+        switch i === updatedIndex {
+        | true => swapOperation(item)
+        | false => item
+        }
+      })
+      ->run(initData)
+
+    switch program.job {
+    | Finish | Loop => program
+    | Infinite => runSwap(selectedArr, ~updatedIndex=updatedIndex - 1)
     }
   }
 }
@@ -122,9 +141,12 @@ module Parse = {
   }
 }
 
-let program =
-  inputFromFile
-  ->Belt.Array.keepMap(Parse.input)
-  ->Program.run({index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty})
+let program = inputFromFile->Belt.Array.keepMap(Parse.input)->Program.run(Program.initData)
 
 let part1 = program.total->Js.log
+
+let part2 =
+  inputFromFile
+  ->Belt.Array.keepMap(Parse.input)
+  ->Program.runSwap(~updatedIndex=Belt.Array.length(inputFromFile))
+  ->Js.log
