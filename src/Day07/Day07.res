@@ -1,26 +1,5 @@
 let inputFromFile = Node.Fs.readFileAsUtf8Sync("./input.txt")->Js.String2.split("\n")
 
-exception Failed_to_parse_input
-
-let testInput = "light red bags contain 1 bright white bag, 2 muted yellow bags.
-dark orange bags contain 3 bright white bags, 4 muted yellow bags.
-bright white bags contain 1 shiny gold bag.
-muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.
-shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.
-dark olive bags contain 3 faded blue bags, 4 dotted black bags.
-vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
-faded blue bags contain no other bags.
-dotted black bags contain no other bags."->Js.String2.split("\n")
-
-// {
-//   name: 'light red',
-//   quantity: 0,
-//   innerList: [
-//     { name: 'bright white', quantity: 1, innerList: [] },
-//     { name: 'muted yellow', quantity: 2, innerList: [] }
-//   ]
-// }
-
 module Bag = {
   type rec t = {
     name: string,
@@ -28,32 +7,41 @@ module Bag = {
     innerList: array<t>,
   }
 
-  let hasBag = (bag: t, targetName) => bag.name === targetName ? Some(bag) : None
+  let hasBag = (item: t, targetName): option<t> => item.name === targetName ? Some(item) : None
 
-  let rec checkInnerList = (innerList, list, targetName) => {
+  let getBag = (list, name): option<t> => list->Belt.Array.getBy(item => item.name === name)
+
+  let rec checkNameInnerList = (innerList, list, targetName) => {
     innerList
     ->Belt.Array.keepMap(item => {
       switch hasBag(item, targetName) {
       | Some(_) => Some(true)
-      | None => {
-          let root = list->Belt.Array.getBy(bag => bag.name === item.name)
-          switch root {
-          | Some(rootItem) => Some(rootItem.innerList->checkInnerList(list, targetName))
-          | None => None
-          }
+      | None =>
+        switch getBag(list, item.name) {
+        | Some(rootItem) => Some(rootItem.innerList->checkNameInnerList(list, targetName))
+        | None => None
         }
       }
     })
     ->Belt.Array.some(v => v)
   }
 
-  let find = (list, ~name) => {
+  let checkName = (list, ~name) => {
     list->Belt.Array.keepMap(item => {
-      item.innerList->checkInnerList(list, name) ? Some(true) : None
+      item.innerList->checkNameInnerList(list, name) ? Some(true) : None
     })
   }
 
-  let count = list => list->Belt.Array.length
+  let rec countName = (list, ~name) =>
+    switch getBag(list, name) {
+    | Some(selectedItem) =>
+      selectedItem.innerList
+      ->Belt.Array.map(item => {
+        list->countName(~name=item.name) * item.quantity
+      })
+      ->Belt.Array.reduce(1, (acc, cur) => acc + cur)
+    | None => 0
+    }
 }
 
 module Parse = {
@@ -75,14 +63,12 @@ module Parse = {
           ->Belt.Array.keepMap(item => {
             let capturedItem = item->Utils.Re.captures(%re("/(\d+) (.*)/"))
             switch capturedItem {
-            | Some(v) => {
-                let obj = {
-                  name: Utils.Array.getLastExn(v),
-                  quantity: Belt.Array.getExn(v, 1)->Garter.Int.fromStringExn,
-                  innerList: [],
-                }
-                Some(obj)
-              }
+            | Some(v) =>
+              Some({
+                name: Utils.Array.getLastExn(v),
+                quantity: Belt.Array.getExn(v, 1)->Garter.Int.fromStringExn,
+                innerList: [],
+              })
             | None => None
             }
           })
@@ -99,9 +85,12 @@ module Parse = {
 
 let parsedInput = inputFromFile->Belt.Array.keepMap(Parse.input)
 
-let part1Name = "shiny gold"
+let name = "shiny gold"
 
-let part1 = parsedInput->Bag.find(~name=part1Name)->Bag.count->Js.log
+let countPart1 = list => Belt.Array.length(list)
+let part1 = parsedInput->Bag.checkName(~name)->countPart1->Js.log
 // 169
 
-let part2 = parsedInput->Js.log
+let countPart2 = count => count - 1
+let part2 = parsedInput->Bag.countName(~name)->countPart2->Js.log
+// 82372
