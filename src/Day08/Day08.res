@@ -5,20 +5,20 @@ exception Failed_to_parse_input
 exception Failed_to_loop
 
 module Program = {
-  type codeType =
+  type codeT =
     | Acc(int)
     | Jmp(int)
     | Nop(int)
 
-  type jopType =
+  type jopT =
     | Finish
     | Loop
     | Infinite
 
-  type resultType = {
+  type programStateT = {
     index: int,
     total: int,
-    job: jopType,
+    job: jopT,
     indexSets: Belt.Set.Int.t,
   }
 
@@ -128,12 +128,13 @@ module Parse = {
   }
 }
 
-let program = inputFromFile->Belt.Array.keepMap(Parse.input)->Program.run(Program.initData)
+let part1Program = inputFromFile->Belt.Array.keepMap(Parse.input)->Program.run(Program.initData)
 
-let part1 = program.total->Js.log
+let part1 = part1Program.total->Js.log
 
-let part2 =
+let part2Program =
   inputFromFile
   ->Belt.Array.keepMap(Parse.input)
   ->Program.runSwap(~updatedIndex=Belt.Array.length(inputFromFile))
-  ->Js.log
+
+let part2 = part2Program.total->Js.log

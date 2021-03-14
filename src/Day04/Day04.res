@@ -1,7 +1,7 @@
 let inputFromFile = Node.Fs.readFileAsUtf8Sync("./input.txt")->Js.String2.split("\n\n")
 
 module Passport = {
-  type part1t = {
+  type part1T = {
     byr: string,
     iyr: string,
     eyr: string,
@@ -12,7 +12,7 @@ module Passport = {
     cid: option<string>,
   }
 
-  type part2t = {
+  type part2T = {
     byr: int,
     iyr: int,
     eyr: int,
@@ -127,7 +127,7 @@ module Parse = {
     }
   }
 
-  let passport = (mapItem): option<Passport.part2t> => {
+  let passport = (mapItem): option<Passport.part2T> => {
     switch mapItem {
     | Some(item) =>
       Some({
