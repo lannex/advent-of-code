@@ -1,91 +1,41 @@
 let inputFromFile = Node.Fs.readFileAsUtf8Sync("./input.txt")->Js.String2.split("\n\n")
 
-exception Failed_to_validate
+module Passport = {
+  type part1t = {
+    byr: string,
+    iyr: string,
+    eyr: string,
+    hgt: string,
+    hcl: string,
+    ecl: string,
+    pid: string,
+    cid: option<string>,
+  }
 
-type rawPassportType = option<string>
+  type part2t = {
+    byr: int,
+    iyr: int,
+    eyr: int,
+    hgt: string,
+    hcl: string,
+    ecl: string,
+    pid: string,
+    cid: option<string>,
+  }
 
-type user = {
-  name: option<string>,
-  age: option<string>,
-}
+  let validateKeys = kv => {
+    let isSome = (item, key) => item->Belt.Map.String.get(key)->Belt.Option.isSome
+    isSome(kv, "byr") &&
+    isSome(kv, "iyr") &&
+    isSome(kv, "eyr") &&
+    isSome(kv, "hgt") &&
+    isSome(kv, "hcl") &&
+    isSome(kv, "ecl") &&
+    isSome(kv, "pid")
+  }
 
-// let parse: string => option<p1passporType>
-// Belt.Array.map(parse) -> [Some(p), None, Some(p)...] -> [p, p] -> array<passortType>
+  let count = arr => arr->Belt.Array.length
 
-// let board => passport => bool
-//
-
-// type p1PassportType = {
-//   byr: string,
-//   iyr: string,
-//   eyr: string,
-//   hgt: string,
-//   hcl: string,
-//   ecl: string,
-//   pid: string,
-//   cid: option<string>,
-// }
-
-// type passportType = {
-//   byr: int,
-//   iyr: int,
-//   eyr: string,
-//   hgt: string,
-//   hcl: string,
-//   ecl: string,
-//   pid: string,
-//   cid: option<string>,
-// }
-
-type passportType = {
-  byr: rawPassportType,
-  iyr: rawPassportType,
-  eyr: rawPassportType,
-  hgt: rawPassportType,
-  hcl: rawPassportType,
-  ecl: rawPassportType,
-  pid: rawPassportType,
-  cid: rawPassportType,
-}
-
-type eclType = AMB | BLU | BRN | GRY | GRN | HZL | OTH
-
-let parseInput = (item: string): option<Belt.Map.String.t<string>> => {
-  let makeMap =
-    item
-    ->Js.String2.splitByRe(%re("/\s/"))
-    ->Belt.Array.map(optionValue =>
-      optionValue->Belt.Option.getWithDefault("")->Js.String2.split(":")
-    )
-    ->Belt.Array.map(keyValue => (
-      Utils.Array.getFirst(keyValue)->Belt.Option.getWithDefault(""),
-      Utils.Array.getLast(keyValue)->Belt.Option.getWithDefault(""),
-    ))
-    ->Belt.Map.String.fromArray
-  Some(makeMap)
-}
-
-let part1 =
-  inputFromFile
-  ->Belt.Array.map(parseInput)
-  ->Belt.Array.keep(mapItem => {
-    switch mapItem {
-    | Some(keyValue) =>
-      keyValue->Belt.Map.String.get("byr")->Belt.Option.isSome &&
-      keyValue->Belt.Map.String.get("iyr")->Belt.Option.isSome &&
-      keyValue->Belt.Map.String.get("eyr")->Belt.Option.isSome &&
-      keyValue->Belt.Map.String.get("hgt")->Belt.Option.isSome &&
-      keyValue->Belt.Map.String.get("hcl")->Belt.Option.isSome &&
-      keyValue->Belt.Map.String.get("ecl")->Belt.Option.isSome &&
-      keyValue->Belt.Map.String.get("pid")->Belt.Option.isSome
-
-    | None => false
-    }
-  })
-  ->Belt.Array.length
-  ->Js.log
-
-module Validate = {
   let matchReg = (string, regex) => {
     switch string->Js.String2.match_(regex) {
     | Some(v) => Belt.Array.getExn(v, 0) === string
@@ -93,103 +43,139 @@ module Validate = {
     }
   }
 
-  let year = (y: rawPassportType, least: int, most: int) => {
-    switch y {
-    | Some(value) => {
-        let v = Garter.Int.fromStringExn(value)
-        v >= least && v <= most
-      }
-    | None => false
-    }
+  let year = (value, least: int, most: int) => {
+    value >= least && value <= most
   }
 
-  let height = (h: rawPassportType) => {
-    switch h {
-    | Some(value) => {
-        let arr = Js.String2.splitByRe(value, %re("/(\d+)(cm|in)/"))
-        switch Belt.Array.get(arr, 1) {
-        | Some(_) => {
-            let [_, v, unit, _] = Js.String2.splitByRe(value, %re("/(\d+)(cm|in)/"))
-            let n = v->Belt.Option.getExn->Garter.Int.fromStringExn
+  let height = value => {
+    let arr = Js.String2.splitByRe(value, %re("/(\d+)(cm|in)/"))
+    switch Belt.Array.get(arr, 1) {
+    | Some(_) => {
+        let [_, v, unit, _] = Js.String2.splitByRe(value, %re("/(\d+)(cm|in)/"))
+        let n = v->Belt.Option.getExn->Garter.Int.fromStringExn
 
-            switch unit->Belt.Option.getWithDefault("") {
-            | "cm" => n >= 150 && n <= 193
-            | "in" => n >= 59 && n <= 76
-            | _ => false
-            }
-          }
-        | None => false
+        switch unit->Belt.Option.getWithDefault("") {
+        | "cm" => n >= 150 && n <= 193
+        | "in" => n >= 59 && n <= 76
+        | _ => false
         }
       }
-
     | None => false
     }
   }
 
-  let hairColor = (c: rawPassportType) => {
-    switch c {
-    | Some(value) => matchReg(value, %re("/(#)[0-9a-f]{6}/"))
-    | None => false
+  let hairColor = value => {
+    matchReg(value, %re("/(#)[0-9a-f]{6}/"))
+  }
+
+  let eyeColor = value => {
+    switch value {
+    | "amb" | "blu" | "brn" | "gry" | "grn" | "hzl" | "oth" => true
+    | _ => false
     }
   }
 
-  let eyeColor = (c: rawPassportType) => {
-    switch c {
-    | Some(value) =>
-      switch value {
-      | "amb" | "blu" | "brn" | "gry" | "grn" | "hzl" | "oth" => true
-      | _ => false
-      }
-    | None => false
-    }
+  let passportId = value => {
+    matchReg(value, %re("/(\d){9}/"))
   }
 
-  let passportId = (id: rawPassportType) => {
-    switch id {
-    | Some(value) => matchReg(value, %re("/(\d){9}/"))
-    | None => false
-    }
-  }
-
-  let all = mapItem => {
-    switch mapItem {
+  let validateAll = obj => {
+    switch obj {
     | Some(item) => {
-        let data: passportType = {
-          byr: item->Belt.Map.String.get("byr"),
-          iyr: item->Belt.Map.String.get("iyr"),
-          eyr: item->Belt.Map.String.get("eyr"),
-          hgt: item->Belt.Map.String.get("hgt"),
-          hcl: item->Belt.Map.String.get("hcl"),
-          ecl: item->Belt.Map.String.get("ecl"),
-          pid: item->Belt.Map.String.get("pid"),
-          cid: item->Belt.Map.String.get("cid"),
-        }
-        [
-          data.byr->year(1920, 2002),
-          data.iyr->year(2010, 2020),
-          data.eyr->year(2020, 2030),
-          data.hgt->height,
-          data.hcl->hairColor,
-          data.ecl->eyeColor,
-          data.pid->passportId,
+        let isValid = [
+          item.byr->year(1920, 2002),
+          item.iyr->year(2010, 2020),
+          item.eyr->year(2020, 2030),
+          item.hgt->height,
+          item.hcl->hairColor,
+          item.ecl->eyeColor,
+          item.pid->passportId,
           // cid: data.cid,
-        ]->Belt.Array.every(item => item === true)
+        ]->Belt.Array.every(v => v === true)
+        Some(isValid)
       }
-    | None => false
+    | None => None
     }
   }
 }
 
+module Parse = {
+  let input = (rawLine: string) => {
+    let result =
+      rawLine
+      ->Js.String2.splitByRe(%re("/\s/"))
+      ->Belt.Array.keepMap(item => {
+        switch item {
+        | Some(v) =>
+          let capturedLine = v->Utils.Re.captures(%re("/(byr|iyr|eyr|hgt|hcl|ecl|pid|cid)(:)(.*)/"))
+          switch capturedLine {
+          | Some(line) => {
+              let [_, key, _, value] = line
+              Some((key, value))
+            }
+          | None => None
+          }
+        | None => None
+        }
+      })
+    switch Belt.Array.length(result) > 0 {
+    | true => {
+        let item = result->Belt.Map.String.fromArray
+        Some(item)
+      }
+    | false => None
+    }
+  }
+
+  let passport = (mapItem): option<Passport.part2t> => {
+    switch mapItem {
+    | Some(item) =>
+      Some({
+        byr: item
+        ->Belt.Map.String.get("byr")
+        ->Belt.Option.getWithDefault("0")
+        ->Garter.Int.fromStringExn,
+        iyr: item
+        ->Belt.Map.String.get("iyr")
+        ->Belt.Option.getWithDefault("0")
+        ->Garter.Int.fromStringExn,
+        eyr: item
+        ->Belt.Map.String.get("eyr")
+        ->Belt.Option.getWithDefault("0")
+        ->Garter.Int.fromStringExn,
+        hgt: item->Belt.Map.String.get("hgt")->Belt.Option.getWithDefault(""),
+        hcl: item->Belt.Map.String.get("hcl")->Belt.Option.getWithDefault(""),
+        ecl: item->Belt.Map.String.get("ecl")->Belt.Option.getWithDefault(""),
+        pid: item->Belt.Map.String.get("pid")->Belt.Option.getWithDefault(""),
+        cid: item->Belt.Map.String.get("cid"),
+      })
+    | None => None
+    }
+  }
+}
+
+let part1 =
+  inputFromFile
+  ->Belt.Array.map(Parse.input)
+  ->Belt.Array.keepMap(mapItem => {
+    switch mapItem {
+    | Some(kv) => {
+        let hasKeys = Passport.validateKeys(kv)
+        hasKeys ? Some(hasKeys) : None
+      }
+    | None => None
+    }
+  })
+  ->Passport.count
+  ->Js.log
+// 256
+
 let part2 =
   inputFromFile
-  ->Belt.Array.map(parseInput)
-  ->Belt.Array.keep(Validate.all)
-  ->Belt.Array.length
-  // [true, false, true, false ...]
-  // ->passportCounter
+  ->Belt.Array.map(Parse.input)
+  ->Belt.Array.map(Parse.passport)
+  ->Belt.Array.keepMap(Passport.validateAll)
+  ->Belt.Array.keep(v => v)
+  ->Passport.count
   ->Js.log
-
-let passportCounter: array<passportType> => int = a => a->Belt.Array.length
-
-// let parser: string => option<t>
-// type t
+// 198
