@@ -24,48 +24,45 @@ module Program = {
 
   let initData = {index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty}
 
-  let setItem = (selectedItem, index, cb) =>
+  let setNextProgramState = (selectedItem, currentItem) => {
+    let {index, total} = selectedItem
     switch Belt.Set.Int.has(selectedItem.indexSets, index) {
     | true => {
         ...selectedItem,
         job: Infinite,
       }
-    | false => cb()
-    }
+    | false =>
+      switch currentItem {
+      | Some(Acc(value)) => {
+          ...selectedItem,
+          index: index + 1,
+          total: total + value,
+          indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
+        }
 
-  let rec run = (list, selectedItem) => {
-    let {index, total} = selectedItem
-    let currentItem = list->Belt.Array.get(index)
+      | Some(Jmp(value)) => {
+          ...selectedItem,
+          index: index + value,
+          indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
+        }
 
-    let updatedItem = switch currentItem {
-    | Some(Acc(value)) =>
-      setItem(selectedItem, index, () => {
-        ...selectedItem,
-        index: index + 1,
-        total: total + value,
-        indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
-      })
+      | Some(Nop(_)) => {
+          ...selectedItem,
+          index: index + 1,
+          indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
+        }
 
-    | Some(Jmp(value)) =>
-      setItem(selectedItem, index, () => {
-        ...selectedItem,
-        index: index + value,
-        indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
-      })
-
-    | Some(Nop(_)) =>
-      setItem(selectedItem, index, () => {
-        ...selectedItem,
-        index: index + 1,
-        indexSets: Belt.Set.Int.add(selectedItem.indexSets, index),
-      })
-
-    | None => {
-        ...selectedItem,
-        job: Finish,
+      | None => {
+          ...selectedItem,
+          job: Finish,
+        }
       }
     }
+  }
 
+  let rec run = (list, selectedItem) => {
+    let {index} = selectedItem
+    let updatedItem = setNextProgramState(selectedItem, list->Belt.Array.get(index))
     switch updatedItem.job {
     | Loop => run(list, updatedItem)
     | _ => updatedItem
