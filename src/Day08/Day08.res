@@ -15,14 +15,12 @@ module Program = {
     | Loop
     | Infinite
 
-  type programStateT = {
+  type t = {
     index: int,
     total: int,
     job: jopT,
     indexSets: Belt.Set.Int.t,
   }
-
-  let initData = {index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty}
 
   let setNextProgramState = (selectedItem, currentItem) => {
     let {index, total} = selectedItem
@@ -60,17 +58,33 @@ module Program = {
     }
   }
 
-  let run = (list, selectedItem) => {
-    let rec doRun = selectedItem => {
-      let updatedItem = setNextProgramState(selectedItem, list->Belt.Array.get(selectedItem.index))
-      if updatedItem.job === Loop {
-        doRun(updatedItem)
+  /*
+  let rec run = (stopFn, nextState, state) => {
+    if (stopFn(state)) {
+      state
+    } else {
+      let s' = nextState(state);
+      run(stopFn, nextState, s')
+    }
+  }
+
+  let p1run = run(stopFn, nextState);
+  p1run(initialState)
+ */
+
+  let run = (list, init) => {
+    let stop = s => s.job !== Loop
+    let getNext = cur => setNextProgramState(cur, list->Belt.Array.get(cur.index))
+
+    let rec doRun = (next, cur) => {
+      if stop(cur) {
+        next(cur)
       } else {
-        updatedItem
+        doRun(next, next(cur))
       }
     }
 
-    doRun(selectedItem)
+    doRun(getNext, init)
   }
 
   let swapOperation = code =>
@@ -80,8 +94,8 @@ module Program = {
     | _ => code
     }
 
-  let runSwap = (list, ~updatedIndex) => {
-    let program = j => {
+  let runSwap = (list, initData, ~index) => {
+    let getNext = j => {
       list
       ->Belt.Array.mapWithIndex((i, item) => {
         switch i === j {
@@ -92,15 +106,20 @@ module Program = {
       ->run(initData)
     }
 
-    let rec doRun = i => {
-      let updatedProgram = program(i)
-      switch updatedProgram.job {
-      | Finish | Loop => updatedProgram
-      | Infinite => doRun(i - 1)
+    let stop = i => {
+      let s = getNext(i)
+      s.job !== Infinite
+    }
+
+    let rec doRun = (next, cur) => {
+      if stop(cur) {
+        next(cur)
+      } else {
+        doRun(next, cur - 1)
       }
     }
 
-    doRun(updatedIndex)
+    doRun(getNext, index)
   }
 }
 
@@ -135,14 +154,21 @@ module Parse = {
   }
 }
 
+let initData: Program.t = {index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty}
+
 let instructionList = inputFromFile->Belt.Array.keepMap(Parse.input)
 
-let p1Runner = Program.run(instructionList)
+// let p1Runner = Program.run(instructionList)
 
-let part1Program = p1Runner(Program.initData)
+// let part1Program = p1Runner(initData)
+
+let part1Program = instructionList->Program.run(initData)
 
 let part1 = part1Program.total->Js.log
+// 1317
 
-let part2Program = instructionList->Program.runSwap(~updatedIndex=Belt.Array.length(inputFromFile))
+let part2Program =
+  instructionList->Program.runSwap(initData, ~index=Belt.Array.length(inputFromFile))
 
 let part2 = part2Program.total->Js.log
+// 1033
