@@ -32,9 +32,11 @@ module Parse = {
   let input = (rawLine: string) => {
     let re = %re("/(\d+)-(\d+) (\w): (\w+)/g")
     switch rawLine->Utils.Re.captures(re) {
-    | Some(arr) => {
-        let [_, start, end, char, password] = arr
+    | Some(arr) =>
+      switch arr {
+      | [_, start, end, char, password] =>
         Some((start->Garter.Int.fromStringExn, end->Garter.Int.fromStringExn, char, password))
+      | _ => None
       }
     | None => None
     }
