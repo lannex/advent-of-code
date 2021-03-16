@@ -60,13 +60,17 @@ module Program = {
     }
   }
 
-  let rec run = (list, selectedItem) => {
-    let {index} = selectedItem
-    let updatedItem = setNextProgramState(selectedItem, list->Belt.Array.get(index))
-    switch updatedItem.job {
-    | Loop => run(list, updatedItem)
-    | _ => updatedItem
+  let run = (list, selectedItem) => {
+    let rec doRun = selectedItem => {
+      let updatedItem = setNextProgramState(selectedItem, list->Belt.Array.get(selectedItem.index))
+      if updatedItem.job === Loop {
+        doRun(updatedItem)
+      } else {
+        updatedItem
+      }
     }
+
+    doRun(selectedItem)
   }
 
   let swapOperation = code =>
@@ -76,21 +80,27 @@ module Program = {
     | _ => code
     }
 
-  let rec runSwap = (arr, ~updatedIndex) => {
-    let program =
-      arr
+  let runSwap = (list, ~updatedIndex) => {
+    let program = j => {
+      list
       ->Belt.Array.mapWithIndex((i, item) => {
-        switch i === updatedIndex {
+        switch i === j {
         | true => swapOperation(item)
         | false => item
         }
       })
       ->run(initData)
-
-    switch program.job {
-    | Finish | Loop => program
-    | Infinite => runSwap(arr, ~updatedIndex=updatedIndex - 1)
     }
+
+    let rec doRun = i => {
+      let updatedProgram = program(i)
+      switch updatedProgram.job {
+      | Finish | Loop => updatedProgram
+      | Infinite => doRun(i - 1)
+      }
+    }
+
+    doRun(updatedIndex)
   }
 }
 
@@ -125,13 +135,14 @@ module Parse = {
   }
 }
 
-let part1Program = inputFromFile->Belt.Array.keepMap(Parse.input)->Program.run(Program.initData)
+let instructionList = inputFromFile->Belt.Array.keepMap(Parse.input)
+
+let p1Runner = Program.run(instructionList)
+
+let part1Program = p1Runner(Program.initData)
 
 let part1 = part1Program.total->Js.log
 
-let part2Program =
-  inputFromFile
-  ->Belt.Array.keepMap(Parse.input)
-  ->Program.runSwap(~updatedIndex=Belt.Array.length(inputFromFile))
+let part2Program = instructionList->Program.runSwap(~updatedIndex=Belt.Array.length(inputFromFile))
 
 let part2 = part2Program.total->Js.log
