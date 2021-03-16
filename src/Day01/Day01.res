@@ -43,18 +43,10 @@ module Parse = {
 
 let targetYear = 2020
 
+let reportList = inputFromFile->Belt.Array.keepMap(Parse.input)
+
 let part1 =
-  inputFromFile
-  ->Belt.Array.keepMap(Parse.input)
-  ->Report.part1(targetYear)
-  ->Belt.Array.keepMap(v => v)
-  ->Report.multiply
-  ->Js.log
+  reportList->Report.part1(targetYear)->Belt.Array.keepMap(v => v)->Report.multiply->Js.log
 
 let part2 =
-  inputFromFile
-  ->Belt.Array.keepMap(Parse.input)
-  ->Report.part2(targetYear)
-  ->Belt.Array.keepMap(v => v)
-  ->Report.multiply
-  ->Js.log
+  reportList->Report.part2(targetYear)->Belt.Array.keepMap(v => v)->Report.multiply->Js.log
