@@ -97,12 +97,7 @@ module Program = {
   let runSwap = (list, initData, ~index) => {
     let getNext = j => {
       list
-      ->Belt.Array.mapWithIndex((i, item) => {
-        switch i === j {
-        | true => swapOperation(item)
-        | false => item
-        }
-      })
+      ->Belt.Array.mapWithIndex((i, item) => i === j ? swapOperation(item) : item)
       ->run(initData)
     }
 
