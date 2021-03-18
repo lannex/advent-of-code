@@ -73,7 +73,6 @@ module Numbers = {
           (newSubList, match, tar)
         }
         let (match, currentTarget) = subList->findSubList(setNextSubList, target)
-        // let (match, currentTarget) = headList->findSubList(setNextSubList, subList, target)
 
         switch match {
         | Some(_) =>
@@ -90,13 +89,29 @@ module Numbers = {
   }
 }
 
-module Parse = {
-  let input = line => line->Belt.Int.fromString
+module type ParseT = {
+  type t
+  let input: string => option<t>
 }
 
-let preamble = 25 // test is 5
+module ParseToInt: ParseT with type t = int = {
+  type t = int
+  let input = (line): option<t> => line->Belt.Int.fromString
+}
 
-let parsedList = inputFromFile->Belt.Array.keepMap(Parse.input)
+module ParseToFloat: ParseT with type t = float = {
+  type t = float
+  let input = (line): option<t> => line->Belt.Float.fromString
+}
 
-let part1 = parsedList->Belt.List.fromArray->Numbers.findError(~preamble)->Js.log
+// input: 25
+// test: 5
+let preamble = 25
+
+let parsedList = parse => inputFromFile->Belt.Array.keepMap(parse)->Belt.List.fromArray
+
+let part1 = ParseToInt.input->parsedList->Numbers.findError(~preamble)->Js.log
 // 57195069
+
+let part2 = ParseToFloat.input->parsedList->Js.log
+//
