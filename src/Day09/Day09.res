@@ -23,15 +23,15 @@ let test = "35
 309
 576"->Js.String2.split("\n")
 
-// let result =
-//   subList
-//   ->Belt.List.keepMap(s => {
-//     let l = headList->Belt.List.keepMap(h => s === h ? Some(s) : None)
-//     Belt.List.length(l) > 0 ? Some(l->Belt.List.toArray) : None
-//   })
-//   ->Belt.List.toArray
-//   ->Belt.Array.concatMany
-// Js.log(result)
+// type numbersToIntT = {
+//   list: list<int>,
+//   currentTarget: int,
+// }
+
+// type numbersToFloat = {
+//   list: list<float>,
+//   currentTarget: float,
+// }
 
 module Numbers = {
   let rec doFind = (stopFn, nextFn, cur) => {
@@ -59,33 +59,48 @@ module Numbers = {
     (match, currentTarget)
   }
 
-  let rec findError = (list, ~preamble) => {
-    switch list->Belt.List.get(preamble) {
-    | Some(target) => {
-        let (headList, _) =
-          list->Belt.List.splitAt(preamble)->Belt.Option.getWithDefault((list{}, list{}))
-        let subList = headList->Belt.List.map(item => target - item)
+  let findInvalidNumber = (arr, ~preamble) => {
+    let list = arr->Belt.List.fromArray
 
-        let setNextSubList = ((l, _, tar)) => {
-          let newSubList = Belt.List.tail(l)->Belt.Option.getWithDefault(list{})
-          let newSubListHead = Belt.List.head(newSubList)
-          let match = findHeadList(headList, newSubListHead)
-          (newSubList, match, tar)
-        }
-        let (match, currentTarget) = subList->findSubList(setNextSubList, target)
+    let rec doFindInvalidNumber = (list, ~preamble) => {
+      switch list->Belt.List.get(preamble) {
+      | Some(target) => {
+          let (headList, _) =
+            list->Belt.List.splitAt(preamble)->Belt.Option.getWithDefault((list{}, list{}))
+          let subList = headList->Belt.List.map(item => target - item)
 
-        switch match {
-        | Some(_) =>
-          switch Belt.List.tail(list) {
-          | Some(v) => findError(v, ~preamble)
-          | None => None
+          let setNextSubList = ((l, _, currentTarget)) => {
+            let newSubList = Belt.List.tail(l)->Belt.Option.getWithDefault(list{})
+            let newSubListHead = Belt.List.head(newSubList)
+            (newSubList, findHeadList(headList, newSubListHead), currentTarget)
           }
-        | None => Some(currentTarget)
-        }
-      }
+          let (match, currentTarget) = subList->findSubList(setNextSubList, target)
 
-    | None => raise(Invalid_argument)
+          switch match {
+          | Some(_) =>
+            switch Belt.List.tail(list) {
+            | Some(v) => doFindInvalidNumber(v, ~preamble)
+            | None => None
+            }
+          | None => Some(currentTarget)
+          }
+        }
+
+      | None => raise(Invalid_argument)
+      }
     }
+
+    doFindInvalidNumber(list, ~preamble)
+  }
+
+  // type encryptionWeaknessT = {
+  //   currentIndex: int,
+  //   // length: int,
+  //   result: array<float>,
+  // }
+
+  let rec findEncryptionWeakness = (list, target, state) => {
+    list
   }
 }
 
@@ -108,10 +123,14 @@ module ParseToFloat: ParseT with type t = float = {
 // test: 5
 let preamble = 25
 
-let parsedList = parse => inputFromFile->Belt.Array.keepMap(parse)->Belt.List.fromArray
+let parsedList = parse => inputFromFile->Belt.Array.keepMap(parse)
 
-let part1 = ParseToInt.input->parsedList->Numbers.findError(~preamble)->Js.log
+let part1 = ParseToInt.input->parsedList->Numbers.findInvalidNumber(~preamble)
+Js.log(part1)
 // 57195069
 
-let part2 = ParseToFloat.input->parsedList->Js.log
+let part2 = ParseToFloat.input->parsedList->Numbers.findEncryptionWeakness(part1)->Js.log
+
+//
+//
 //
