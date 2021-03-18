@@ -26,14 +26,8 @@ let test = "35
 // let result =
 //   subList
 //   ->Belt.List.keepMap(s => {
-//     let l = headList->Belt.List.keepMap(h => {
-//       s === h ? Some(s) : None
-//     })
-
-//     switch Belt.List.length(l) > 0 {
-//     | true => Some(l->Belt.List.toArray)
-//     | false => None
-//     }
+//     let l = headList->Belt.List.keepMap(h => s === h ? Some(s) : None)
+//     Belt.List.length(l) > 0 ? Some(l->Belt.List.toArray) : None
 //   })
 //   ->Belt.List.toArray
 //   ->Belt.Array.concatMany
@@ -59,15 +53,9 @@ module Numbers = {
     match
   }
 
-  let findSubList = (headList, subList, target) => {
-    let setNextSubList = ((l, _, tar)) => {
-      let newSubList = Belt.List.tail(l)->Belt.Option.getWithDefault(list{})
-      let newSubListHead = Belt.List.head(newSubList)
-      let match = findHeadList(headList, newSubListHead)
-      (newSubList, match, tar)
-    }
+  let findSubList = (subList, nextFn, target) => {
     let stopSubList = ((l, v, _)) => Belt.Option.isSome(v) || Belt.List.length(l) === 0
-    let (_, match, currentTarget) = stopSubList->doFind(setNextSubList, (subList, None, target))
+    let (_, match, currentTarget) = stopSubList->doFind(nextFn, (subList, None, target))
     (match, currentTarget)
   }
 
@@ -78,7 +66,14 @@ module Numbers = {
           list->Belt.List.splitAt(preamble)->Belt.Option.getWithDefault((list{}, list{}))
         let subList = headList->Belt.List.map(item => target - item)
 
-        let (match, currentTarget) = findSubList(headList, subList, target)
+        let setNextSubList = ((l, _, tar)) => {
+          let newSubList = Belt.List.tail(l)->Belt.Option.getWithDefault(list{})
+          let newSubListHead = Belt.List.head(newSubList)
+          let match = findHeadList(headList, newSubListHead)
+          (newSubList, match, tar)
+        }
+        let (match, currentTarget) = subList->findSubList(setNextSubList, target)
+        // let (match, currentTarget) = headList->findSubList(setNextSubList, subList, target)
 
         switch match {
         | Some(_) =>
