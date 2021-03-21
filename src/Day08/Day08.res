@@ -2,8 +2,6 @@ let inputFromFile = Node.Fs.readFileAsUtf8Sync("./input.txt")->Js.String2.split(
 
 exception Failed_to_parse_input
 
-exception Failed_to_loop
-
 module Program = {
   type codeT =
     | Acc(int)
@@ -15,7 +13,7 @@ module Program = {
     | Loop
     | Infinite
 
-  type t = {
+  type stateT = {
     index: int,
     total: int,
     job: jopT,
@@ -24,12 +22,12 @@ module Program = {
 
   let setNextProgramState = (selectedItem, currentItem) => {
     let {index, total} = selectedItem
-    switch Belt.Set.Int.has(selectedItem.indexSets, index) {
-    | true => {
+    if Belt.Set.Int.has(selectedItem.indexSets, index) {
+      {
         ...selectedItem,
         job: Infinite,
       }
-    | false =>
+    } else {
       switch currentItem {
       | Some(Acc(value)) => {
           ...selectedItem,
@@ -58,23 +56,8 @@ module Program = {
     }
   }
 
-  /*
-  let rec run = (stopFn, nextState, state) => {
-    if (stopFn(state)) {
-      state
-    } else {
-      let s' = nextState(state);
-      run(stopFn, nextState, s')
-    }
-  }
-
-  let p1run = run(stopFn, nextState);
-  p1run(initialState)
- */
-
   let run = (list, init) => {
     let stop = s => s.job !== Loop
-    let getNext = cur => setNextProgramState(cur, list->Belt.Array.get(cur.index))
 
     let rec doRun = (next, cur) => {
       if stop(cur) {
@@ -84,7 +67,8 @@ module Program = {
       }
     }
 
-    doRun(getNext, init)
+    let next = cur => setNextProgramState(cur, list->Belt.Array.get(cur.index))
+    doRun(next, init)
   }
 
   let swapOperation = code =>
@@ -100,11 +84,7 @@ module Program = {
       ->Belt.Array.mapWithIndex((i, item) => i === j ? swapOperation(item) : item)
       ->run(initData)
     }
-
-    let stop = i => {
-      let s = getNext(i)
-      s.job !== Infinite
-    }
+    let stop = i => getNext(i).job !== Infinite
 
     let rec doRun = (next, cur) => {
       if stop(cur) {
@@ -118,18 +98,12 @@ module Program = {
   }
 }
 
-module Parse = {
+module Parser = {
   open Program
 
-  let input = item => {
-    let re = %re("/(acc|jmp|nop) (\+|\-)(\d+)/")->Js.Re.exec_(item)
-
-    switch re {
-    | Some(reResult) => {
-        let result =
-          reResult
-          ->Js.Re.captures
-          ->Belt.Array.keepMap(nullableItem => Js.Nullable.toOption(nullableItem))
+  let input = rawLine =>
+    switch rawLine->Utils.Re.captures(%re("/(acc|jmp|nop) (\+|\-)(\d+)/")) {
+    | Some(result) => {
         let argument =
           (Belt.Array.getExn(result, 2) ++ Utils.Array.getLastExn(result))->Garter.Int.fromStringExn
         let operation = Belt.Array.getExn(result, 1)->(
@@ -146,15 +120,13 @@ module Parse = {
       }
     | None => None
     }
-  }
 }
 
-let initData: Program.t = {index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty}
+let initData: Program.stateT = {index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty}
 
-let instructionList = inputFromFile->Belt.Array.keepMap(Parse.input)
+let instructionList = inputFromFile->Belt.Array.keepMap(Parser.input)
 
 // let p1Runner = Program.run(instructionList)
-
 // let part1Program = p1Runner(initData)
 
 let part1Program = instructionList->Program.run(initData)
