@@ -56,19 +56,18 @@ module Program = {
     }
   }
 
-  let run = (list, init) => {
-    let stop = s => s.job !== Loop
-
-    let rec doRun = (next, cur) => {
-      if stop(cur) {
-        next(cur)
-      } else {
-        doRun(next, next(cur))
-      }
+  let rec doRun = (stopFn, nextFn, cur) => {
+    if stopFn(cur) {
+      nextFn(cur)
+    } else {
+      doRun(stopFn, nextFn, nextFn(cur))
     }
+  }
 
-    let next = cur => setNextProgramState(cur, list->Belt.Array.get(cur.index))
-    doRun(next, init)
+  let run = (list, initState) => {
+    let stop = s => s.job !== Loop
+    let setNext = cur => setNextProgramState(cur, list->Belt.Array.get(cur.index))
+    doRun(stop, setNext, initState)
   }
 
   let swapOperation = code =>
@@ -78,23 +77,26 @@ module Program = {
     | _ => code
     }
 
-  let runSwap = (list, initData, ~index) => {
-    let getNext = j => {
+  let runSwap = (list, initState, ~index) => {
+    let setNextState = j => {
       list
       ->Belt.Array.mapWithIndex((i, item) => i === j ? swapOperation(item) : item)
-      ->run(initData)
-    }
-    let stop = i => getNext(i).job !== Infinite
-
-    let rec doRun = (next, cur) => {
-      if stop(cur) {
-        next(cur)
-      } else {
-        doRun(next, cur - 1)
-      }
+      ->run(initState)
     }
 
-    doRun(getNext, index)
+    let setNext = ((_, currentIndex)) => {
+      let nextIndex = currentIndex - 1
+      let nextState = setNextState(nextIndex)
+      (nextState, nextIndex)
+    }
+
+    let stop = ((state, i)) => {
+      let (next, _) = setNext((state, i))
+      next.job !== Infinite
+    }
+
+    let (result, _) = doRun(stop, setNext, (setNextState(index), index))
+    result
   }
 }
 
@@ -122,20 +124,27 @@ module Parser = {
     }
 }
 
-let initData: Program.stateT = {index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty}
+let initState: Program.stateT = {index: 0, total: 0, job: Loop, indexSets: Belt.Set.Int.empty}
 
 let instructionList = inputFromFile->Belt.Array.keepMap(Parser.input)
 
-// let p1Runner = Program.run(instructionList)
-// let part1Program = p1Runner(initData)
+// uncurrying
+// let part1Program = instructionList->Program.run(initState)
 
-let part1Program = instructionList->Program.run(initData)
+// currying
+let run = Program.run(instructionList)
+let part1Program = run(initState)
 
 let part1 = part1Program.total->Js.log
 // 1317
 
-let part2Program =
-  instructionList->Program.runSwap(initData, ~index=Belt.Array.length(inputFromFile))
+// uncurrying
+// let part2Program =
+//   instructionList->Program.runSwap(initState, ~index=Belt.Array.length(inputFromFile))
+
+// currying
+let swap = Program.runSwap(instructionList)
+let part2Program = swap(initState, ~index=Belt.Array.length(inputFromFile))
 
 let part2 = part2Program.total->Js.log
 // 1033
