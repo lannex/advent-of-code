@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/lannex/advent-of-code-2020#readme",
   "devDependencies": {
-    "bs-platform": "^9.0.1"
+    "bs-platform": "^9.0.2"
   },
   "dependencies": {
     "@greenlabs/garter": "^0.5.0"
